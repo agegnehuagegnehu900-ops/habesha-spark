@@ -43,7 +43,7 @@ const ProfilePage = () => {
 
         {/* Bio */}
         <p className="mt-3 text-center text-sm text-muted-foreground px-8">
-          🇪🇹 ሐበሻ TikTok ተጠቃሚ
+          🇪🇹 Agegnehu ተጠቃሚ
         </p>
       </div>
 
