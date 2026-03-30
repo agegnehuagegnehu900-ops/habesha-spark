@@ -42,9 +42,9 @@ const LoginPage = () => {
           className="mb-8 text-center"
         >
           <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl gradient-ethiopia glow-green">
-            <span className="text-3xl font-black text-secondary-foreground">ሐ</span>
+            <span className="text-3xl font-black text-secondary-foreground">አ</span>
           </div>
-          <h1 className="text-2xl font-bold text-foreground">ሐበሻ TikTok</h1>
+          <h1 className="text-2xl font-bold text-foreground">Agegnehu</h1>
           <p className="mt-1 text-sm text-muted-foreground">የኢትዮጵያ ቪዲዮ ማህበረሰብ</p>
         </motion.div>
 
