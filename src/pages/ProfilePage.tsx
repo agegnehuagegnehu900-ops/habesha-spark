@@ -22,7 +22,7 @@ const ProfilePage = () => {
       {/* Profile info */}
       <div className="mt-4 flex flex-col items-center">
         <div className="h-20 w-20 rounded-full gradient-ethiopia flex items-center justify-center glow-green">
-          <span className="text-2xl font-black text-secondary-foreground">ሐ</span>
+          <span className="text-2xl font-black text-secondary-foreground">አ</span>
         </div>
         <p className="mt-3 text-sm text-muted-foreground">@user</p>
 

@@ -11,7 +11,7 @@ const CreatePage = () => {
 
         <h2 className="text-xl font-bold text-foreground mb-2">ቪዲዮ ፍጠር</h2>
         <p className="text-sm text-muted-foreground text-center mb-8">
-          ለሐበሻ ማህበረሰብ ቪዲዮ ይስቀሉ
+          ለAgegnehu ማህበረሰብ ቪዲዮ ይስቀሉ
         </p>
 
         <div className="w-full max-w-xs space-y-3">

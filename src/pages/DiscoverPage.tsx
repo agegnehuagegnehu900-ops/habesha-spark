@@ -13,8 +13,8 @@ const categories = [
 ];
 
 const trending = [
-  "#ኢስክስታ", "#ሐበሻ", "#ኢትዮጵያ", "#addisababa",
-  "#ethiopianfood", "#habeshamusic", "#ላሊበላ", "#teddy",
+  "#ኢስክስታ", "#Agegnehu", "#ኢትዮጵያ", "#addisababa",
+  "#ethiopianfood", "#agegnehu", "#ላሊበላ", "#teddy",
 ];
 
 const DiscoverPage = () => {

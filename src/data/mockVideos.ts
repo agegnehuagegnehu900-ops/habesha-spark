@@ -42,7 +42,7 @@ export const mockVideos = [
   {
     id: 5,
     username: "ethio_music",
-    description: "🎶 አዲስ ሙዚቃ ለሐበሻ ህዝብ! ላይክ አድርጉ! #ethiopianmusic #habesha",
+    description: "🎶 አዲስ ሙዚቃ ለኢትዮጵያ ህዝብ! ላይክ አድርጉ! #ethiopianmusic #agegnehu",
     song: "Tilahun Gessesse - Yene Hasab",
     likes: 432000,
     comments: 8700,
