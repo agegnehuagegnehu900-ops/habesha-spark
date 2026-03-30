@@ -1,8 +1,8 @@
 export const mockVideos = [
   {
     id: 1,
-    username: "habesha_dancer",
-    description: "🇪🇹 የአማራ ባህላዊ ዳንስ! ማን ይወዳል? #ሐበሻ #ኢስክስታ #ethiopia",
+    username: "ethio_dancer",
+    description: "🇪🇹 የአማራ ባህላዊ ዳንስ! ማን ይወዳል? #Agegnehu #ኢስክስታ #ethiopia",
     song: "Teddy Afro - Tikur Sew",
     likes: 245000,
     comments: 3200,
