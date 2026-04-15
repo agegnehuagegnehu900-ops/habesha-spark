@@ -76,6 +76,27 @@ export type Database = {
         }
         Relationships: []
       }
+      reports: {
+        Row: {
+          created_at: string
+          id: string
+          report_text: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          report_text: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          report_text?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       videos: {
         Row: {
           comments_count: number
