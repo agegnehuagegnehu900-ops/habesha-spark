@@ -3,13 +3,25 @@ import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Language } from "@/i18n/translations";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const SettingsPage = () => {
   const navigate = useNavigate();
   const { t, language, setLanguage, languageNames } = useLanguage();
+  const { toast } = useToast();
   const [showLanguages, setShowLanguages] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   const [autoPlay, setAutoPlay] = useState(true);
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      navigate("/login");
+    }
+  };
 
   const settingSections = [
     {
@@ -100,7 +112,7 @@ const SettingsPage = () => {
 
         {/* Danger zone */}
         <div className="space-y-2">
-          <button className="flex w-full items-center gap-3 rounded-xl border border-border bg-card px-4 py-3.5 hover:bg-muted transition-colors">
+          <button onClick={handleLogout} className="flex w-full items-center gap-3 rounded-xl border border-border bg-card px-4 py-3.5 hover:bg-muted transition-colors">
             <LogOut className="h-4.5 w-4.5 text-accent" />
             <span className="text-sm font-medium text-accent">{t("signOut")}</span>
           </button>
