@@ -12,6 +12,7 @@ import InboxPage from "./pages/InboxPage";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import HelpCenterPage from "./pages/HelpCenterPage";
+import ReportPage from "./pages/ReportPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/help" element={<HelpCenterPage />} />
+            <Route path="/report" element={<ReportPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

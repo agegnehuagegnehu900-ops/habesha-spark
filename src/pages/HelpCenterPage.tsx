@@ -72,11 +72,11 @@ const HelpCenterPage = () => {
 
         {/* Quick actions */}
         <div className="grid grid-cols-2 gap-3">
-          <button className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-4 hover:bg-muted transition-colors">
+          <button onClick={() => navigate("/help")} className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-4 hover:bg-muted transition-colors">
             <MessageCircle className="h-5 w-5 text-primary" />
             <span className="text-xs font-medium text-foreground">{t("contactSupport")}</span>
           </button>
-          <button className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-4 hover:bg-muted transition-colors">
+          <button onClick={() => navigate("/report")} className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-4 hover:bg-muted transition-colors">
             <AlertTriangle className="h-5 w-5 text-accent" />
             <span className="text-xs font-medium text-foreground">{t("reportProblem")}</span>
           </button>
