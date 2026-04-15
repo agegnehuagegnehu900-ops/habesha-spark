@@ -21,9 +21,9 @@ const HomePage = () => {
           {activeTab === "foryou" && <div className="mt-1 mx-auto h-0.5 w-6 rounded-full gradient-ethiopia-h" />}
         </button>
       </div>
-      <div ref={scrollRef} className="h-full w-full snap-y snap-mandatory overflow-y-scroll scrollbar-hide">
+      <div ref={scrollRef} className="h-full w-full snap-y snap-mandatory overflow-y-scroll scroll-smooth scrollbar-hide" style={{ scrollSnapStop: "always", WebkitOverflowScrolling: "touch" }}>
         {mockVideos.map((video) => (
-          <div key={video.id} className="h-screen w-full snap-start">
+          <div key={video.id} className="h-screen w-full snap-start snap-always">
             <VideoCard video={video} />
           </div>
         ))}
