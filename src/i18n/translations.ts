@@ -610,8 +610,12 @@ const baseTranslations: Partial<Record<Language, TranslationKeys>> = {
   },
 };
 
-// Auto-fill remaining languages with English content (translations can be added incrementally)
+// Populate translations: known languages get full translations, others fall back to English
+(Object.keys(baseTranslations) as Language[]).forEach((l) => {
+  translations[l] = baseTranslations[l]!;
+});
 const extraLangs: Language[] = ['ar', 'fr', 'sw', 'es', 'zh', 'pt', 'hi', 'tr', 'de', 'ru', 'it', 'ja', 'ko', 'ur'];
 extraLangs.forEach((l) => {
-  (translations as Record<Language, TranslationKeys>)[l] = translations.en;
+  translations[l] = baseTranslations.en!;
 });
+
