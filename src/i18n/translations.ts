@@ -607,3 +607,9 @@ export const translations: Record<Language, TranslationKeys> = {
     helpMessage: 'ሎሚ ብኸመይ ክንሕግዘኩም ንኽእል?',
   },
 };
+
+// Auto-fill remaining languages with English content (translations can be added incrementally)
+const extraLangs: Language[] = ['ar', 'fr', 'sw', 'es', 'zh', 'pt', 'hi', 'tr', 'de', 'ru', 'it', 'ja', 'ko', 'ur'];
+extraLangs.forEach((l) => {
+  (translations as Record<Language, TranslationKeys>)[l] = translations.en;
+});
