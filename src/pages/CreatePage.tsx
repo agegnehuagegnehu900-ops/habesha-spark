@@ -6,6 +6,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { uploadToCloudinary, getVideoThumbnail } from "@/lib/cloudinary";
 
 const CreatePage = () => {
   const { t } = useLanguage();
