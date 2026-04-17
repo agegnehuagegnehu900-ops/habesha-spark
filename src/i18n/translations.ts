@@ -108,7 +108,9 @@ type TranslationKeys = {
   helpMessage: string;
 };
 
-export const translations: Record<Language, TranslationKeys> = {
+export const translations: Record<Language, TranslationKeys> = {} as Record<Language, TranslationKeys>;
+
+const baseTranslations: Partial<Record<Language, TranslationKeys>> = {
   en: {
     home: 'Home',
     discover: 'Discover',
