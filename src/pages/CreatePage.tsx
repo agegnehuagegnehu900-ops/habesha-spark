@@ -45,30 +45,18 @@ const CreatePage = () => {
   const handleUpload = async () => {
     if (!selectedVideo || !user) return;
     setUploading(true);
-    setProgress(10);
+    setProgress(0);
     try {
-      const ext = selectedVideo.name.split(".").pop() || "mp4";
-      const path = `${user.id}/${Date.now()}.${ext}`;
-
-      setProgress(30);
-      const { error: upErr } = await supabase.storage.from("videos").upload(path, selectedVideo, {
-        cacheControl: "3600",
-        upsert: false,
-        contentType: selectedVideo.type,
-      });
-      if (upErr) throw upErr;
-      setProgress(70);
-
-      const { data: urlData } = supabase.storage.from("videos").getPublicUrl(path);
+      const result = await uploadToCloudinary(selectedVideo, (p) => setProgress(p));
 
       const { error: dbErr } = await supabase.from("videos").insert({
         user_id: user.id,
-        video_url: urlData.publicUrl,
+        video_url: result.secure_url,
+        thumbnail_url: getVideoThumbnail(result.secure_url),
         description: description || null,
       });
       if (dbErr) throw dbErr;
 
-      setProgress(100);
       toast({ title: "✅ ተሳክቷል!", description: "ቪዲዮዎ ተጭኗል" });
       clearVideo();
       navigate("/");
