@@ -1,29 +1,34 @@
 import { useState, useRef } from "react";
-import { Camera, Video, Image, Music, Sparkles, Upload, X, Play } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Camera, Video, Image, Upload, X, Loader2 } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
 const CreatePage = () => {
   const { t } = useLanguage();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [description, setDescription] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (!file.type.startsWith("video/")) {
       toast({ title: "ቪዲዮ ብቻ!", description: "እባክዎ ቪዲዮ ፋይል ይምረጡ", variant: "destructive" });
       return;
     }
-
     if (file.size > 100 * 1024 * 1024) {
       toast({ title: "ፋይሉ ትልቅ ነው", description: "ከ100MB ያነሰ ቪዲዮ ይምረጡ", variant: "destructive" });
       return;
     }
-
     setSelectedVideo(file);
     setVideoPreview(URL.createObjectURL(file));
   };
@@ -32,51 +37,83 @@ const CreatePage = () => {
     setSelectedVideo(null);
     if (videoPreview) URL.revokeObjectURL(videoPreview);
     setVideoPreview(null);
+    setDescription("");
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleUpload = () => {
-    if (!selectedVideo) return;
-    toast({ title: "✅ ቪዲዮ ተመርጧል!", description: `${selectedVideo.name} (${(selectedVideo.size / 1024 / 1024).toFixed(1)}MB)` });
+  const handleUpload = async () => {
+    if (!selectedVideo || !user) return;
+    setUploading(true);
+    setProgress(10);
+    try {
+      const ext = selectedVideo.name.split(".").pop() || "mp4";
+      const path = `${user.id}/${Date.now()}.${ext}`;
+
+      setProgress(30);
+      const { error: upErr } = await supabase.storage.from("videos").upload(path, selectedVideo, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: selectedVideo.type,
+      });
+      if (upErr) throw upErr;
+      setProgress(70);
+
+      const { data: urlData } = supabase.storage.from("videos").getPublicUrl(path);
+
+      const { error: dbErr } = await supabase.from("videos").insert({
+        user_id: user.id,
+        video_url: urlData.publicUrl,
+        description: description || null,
+      });
+      if (dbErr) throw dbErr;
+
+      setProgress(100);
+      toast({ title: "✅ ተሳክቷል!", description: "ቪዲዮዎ ተጭኗል" });
+      clearVideo();
+      navigate("/");
+    } catch (e: any) {
+      toast({ title: "ስህተት", description: e.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+      setProgress(0);
+    }
   };
 
   return (
     <div className="flex min-h-screen flex-col bg-background pb-20">
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="video/*"
-        capture="environment"
-        className="hidden"
-        onChange={handleVideoSelect}
-      />
+      <input ref={fileInputRef} type="file" accept="video/*" className="hidden" onChange={handleVideoSelect} />
 
-      <div className="flex flex-1 flex-col items-center justify-center px-6">
+      <div className="flex flex-1 flex-col items-center justify-center px-6 py-8">
         {videoPreview ? (
           <div className="w-full max-w-xs">
             <div className="relative rounded-2xl overflow-hidden border border-border bg-card aspect-[9/16]">
-              <video
-                src={videoPreview}
-                className="w-full h-full object-cover"
-                controls
-                playsInline
-              />
-              <button
-                onClick={clearVideo}
-                className="absolute top-2 right-2 h-8 w-8 rounded-full bg-background/80 flex items-center justify-center"
-              >
+              <video src={videoPreview} className="w-full h-full object-cover" controls playsInline />
+              <button onClick={clearVideo} disabled={uploading} className="absolute top-2 right-2 h-8 w-8 rounded-full bg-background/80 flex items-center justify-center">
                 <X className="h-4 w-4 text-foreground" />
               </button>
             </div>
             <p className="text-xs text-muted-foreground mt-2 text-center truncate">
               {selectedVideo?.name} • {((selectedVideo?.size || 0) / 1024 / 1024).toFixed(1)}MB
             </p>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="ስለ ቪዲዮዎ ይፃፉ..."
+              maxLength={300}
+              className="w-full mt-3 rounded-xl border border-border bg-card p-3 text-sm text-foreground outline-none resize-none"
+              rows={3}
+            />
+            {uploading && (
+              <div className="mt-3 h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                <div className="h-full gradient-ethiopia-h transition-all" style={{ width: `${progress}%` }} />
+              </div>
+            )}
             <button
               onClick={handleUpload}
-              className="w-full mt-4 py-3 rounded-xl gradient-ethiopia text-secondary-foreground font-bold text-sm glow-green"
+              disabled={uploading}
+              className="w-full mt-4 py-3 rounded-xl gradient-ethiopia text-secondary-foreground font-bold text-sm glow-green disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              <Upload className="h-4 w-4 inline mr-2" />
-              {t("recordVideo")}
+              {uploading ? <><Loader2 className="h-4 w-4 animate-spin" />ይጫናል... {progress}%</> : <><Upload className="h-4 w-4" />ጫን</>}
             </button>
           </div>
         ) : (
@@ -88,15 +125,13 @@ const CreatePage = () => {
             <p className="text-sm text-muted-foreground text-center mb-8">{t("uploadForCommunity")}</p>
             <div className="w-full max-w-xs space-y-3">
               {[
-                { icon: Video, label: t("recordVideo"), color: "bg-accent", action: () => fileInputRef.current?.click() },
-                { icon: Image, label: t("chooseFromGallery"), color: "bg-primary", action: () => fileInputRef.current?.click() },
-                { icon: Music, label: t("addMusic"), color: "bg-secondary", action: () => {} },
-                { icon: Sparkles, label: t("addEffects"), color: "bg-ethiopia-green", action: () => {} },
+                { icon: Video, label: t("recordVideo"), color: "bg-accent" },
+                { icon: Image, label: t("chooseFromGallery"), color: "bg-primary" },
               ].map((item) => (
                 <button
                   key={item.label}
-                  onClick={item.action}
-                  className="flex w-full items-center gap-4 rounded-xl bg-card border border-border p-4 transition-all hover:bg-muted active:scale-[0.98]"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex w-full items-center gap-4 rounded-xl bg-card border border-border p-4 hover:bg-muted active:scale-[0.98]"
                 >
                   <div className={`${item.color} h-10 w-10 rounded-lg flex items-center justify-center`}>
                     <item.icon className="h-5 w-5 text-foreground" />

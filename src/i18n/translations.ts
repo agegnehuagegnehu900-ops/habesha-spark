@@ -1,4 +1,6 @@
-export type Language = 'en' | 'am' | 'sd' | 'or' | 'so' | 'af' | 'ti';
+export type Language =
+  | 'en' | 'am' | 'sd' | 'or' | 'so' | 'af' | 'ti'
+  | 'ar' | 'fr' | 'sw' | 'es' | 'zh' | 'pt' | 'hi' | 'tr' | 'de' | 'ru' | 'it' | 'ja' | 'ko' | 'ur';
 
 export const languageNames: Record<Language, string> = {
   en: 'English',
@@ -8,6 +10,20 @@ export const languageNames: Record<Language, string> = {
   so: 'Af-Soomaali (Somali)',
   af: 'Qafár af (Afar)',
   ti: 'ትግርኛ (Tigrinya)',
+  ar: 'العربية (Arabic)',
+  fr: 'Français (French)',
+  sw: 'Kiswahili (Swahili)',
+  es: 'Español (Spanish)',
+  zh: '中文 (Chinese)',
+  pt: 'Português (Portuguese)',
+  hi: 'हिन्दी (Hindi)',
+  tr: 'Türkçe (Turkish)',
+  de: 'Deutsch (German)',
+  ru: 'Русский (Russian)',
+  it: 'Italiano (Italian)',
+  ja: '日本語 (Japanese)',
+  ko: '한국어 (Korean)',
+  ur: 'اردو (Urdu)',
 };
 
 type TranslationKeys = {
@@ -92,7 +108,9 @@ type TranslationKeys = {
   helpMessage: string;
 };
 
-export const translations: Record<Language, TranslationKeys> = {
+export const translations: Record<Language, TranslationKeys> = {} as Record<Language, TranslationKeys>;
+
+const baseTranslations: Partial<Record<Language, TranslationKeys>> = {
   en: {
     home: 'Home',
     discover: 'Discover',
@@ -591,3 +609,13 @@ export const translations: Record<Language, TranslationKeys> = {
     helpMessage: 'ሎሚ ብኸመይ ክንሕግዘኩም ንኽእል?',
   },
 };
+
+// Populate translations: known languages get full translations, others fall back to English
+(Object.keys(baseTranslations) as Language[]).forEach((l) => {
+  translations[l] = baseTranslations[l]!;
+});
+const extraLangs: Language[] = ['ar', 'fr', 'sw', 'es', 'zh', 'pt', 'hi', 'tr', 'de', 'ru', 'it', 'ja', 'ko', 'ur'];
+extraLangs.forEach((l) => {
+  translations[l] = baseTranslations.en!;
+});
+
