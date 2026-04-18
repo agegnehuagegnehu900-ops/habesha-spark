@@ -1,6 +1,7 @@
 // Cloudinary unsigned upload helper
 const CLOUD_NAME = "dljojsuqo";
-const UPLOAD_PRESET = "agegnehu_videos"; // unsigned preset created in Cloudinary dashboard
+const UPLOAD_PRESET = "agegnehu_videos";
+const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
 
 export interface CloudinaryUploadResult {
   secure_url: string;
@@ -13,24 +14,42 @@ export interface CloudinaryUploadResult {
   bytes: number;
 }
 
+const getCloudinaryErrorMessage = (status: number, responseText: string) => {
+  let message = `Upload failed (${status})`;
+
+  try {
+    const parsed = JSON.parse(responseText);
+    const cloudinaryMessage = parsed.error?.message;
+
+    if (cloudinaryMessage === "Unknown API key ") {
+      return "Cloudinary unsigned preset ወይም cloud name አልተጣጣመም";
+    }
+
+    if (cloudinaryMessage) {
+      return cloudinaryMessage;
+    }
+  } catch {
+    return message;
+  }
+
+  return message;
+};
+
 export async function uploadToCloudinary(
   file: File,
   onProgress?: (percent: number) => void
 ): Promise<CloudinaryUploadResult> {
-  const resourceType = file.type.startsWith("video/") ? "video" : "image";
-  const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`;
-
   const formData = new FormData();
   formData.append("file", file);
   formData.append("upload_preset", UPLOAD_PRESET);
 
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open("POST", url);
+    xhr.open("POST", CLOUDINARY_UPLOAD_URL);
 
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable && onProgress) {
-        onProgress(Math.round((e.loaded / e.total) * 100));
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable && onProgress) {
+        onProgress(Math.round((event.loaded / event.total) * 100));
       }
     };
 
@@ -38,17 +57,13 @@ export async function uploadToCloudinary(
       if (xhr.status >= 200 && xhr.status < 300) {
         try {
           resolve(JSON.parse(xhr.responseText));
-        } catch (e) {
+        } catch {
           reject(new Error("Invalid response from Cloudinary"));
         }
-      } else {
-        let msg = `Upload failed (${xhr.status})`;
-        try {
-          const err = JSON.parse(xhr.responseText);
-          msg = err.error?.message || msg;
-        } catch {}
-        reject(new Error(msg));
+        return;
       }
+
+      reject(new Error(getCloudinaryErrorMessage(xhr.status, xhr.responseText)));
     };
 
     xhr.onerror = () => reject(new Error("Network error during upload"));
@@ -56,8 +71,10 @@ export async function uploadToCloudinary(
   });
 }
 
-// Generate optimized thumbnail URL from a Cloudinary video URL
 export function getVideoThumbnail(videoUrl: string): string {
   if (!videoUrl.includes("cloudinary.com")) return "";
-  return videoUrl.replace("/upload/", "/upload/so_0,w_400,h_700,c_fill/").replace(/\.(mp4|mov|webm|avi)$/i, ".jpg");
+
+  return videoUrl
+    .replace("/upload/", "/upload/so_0,w_400,h_700,c_fill/")
+    .replace(/\.(mp4|mov|webm|avi|mkv)$/i, ".jpg");
 }
