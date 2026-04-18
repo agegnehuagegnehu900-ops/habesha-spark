@@ -25,25 +25,42 @@ const ProfilePage = () => {
   const [counts, setCounts] = useState({ videos: 0, likes: 0 });
   const [loading, setLoading] = useState(true);
 
+  const loadData = async () => {
+    if (!user) return;
+    setLoading(true);
+    const [{ data: p }, { data: vids }] = await Promise.all([
+      supabase.from("profiles").select("username, display_name, bio").eq("user_id", user.id).maybeSingle(),
+      supabase
+        .from("videos")
+        .select("id, video_url, thumbnail_url, views_count, likes_count")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false }),
+    ]);
+    setProfile(p);
+    const list = (vids || []) as MyVideo[];
+    setVideos(list);
+    const totalLikes = list.reduce((s, v) => s + (v.likes_count || 0), 0);
+    setCounts({ videos: list.length, likes: totalLikes });
+    setLoading(false);
+  };
+
   useEffect(() => {
     if (!user) return;
-    (async () => {
-      setLoading(true);
-      const [{ data: p }, { data: vids }] = await Promise.all([
-        supabase.from("profiles").select("username, display_name, bio").eq("user_id", user.id).maybeSingle(),
-        supabase
-          .from("videos")
-          .select("id, video_url, thumbnail_url, views_count, likes_count")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false }),
-      ]);
-      setProfile(p);
-      const list = (vids || []) as MyVideo[];
-      setVideos(list);
-      const totalLikes = list.reduce((s, v) => s + (v.likes_count || 0), 0);
-      setCounts({ videos: list.length, likes: totalLikes });
-      setLoading(false);
-    })();
+    loadData();
+
+    const channel = supabase
+      .channel(`profile-videos-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "videos", filter: `user_id=eq.${user.id}` },
+        () => loadData()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const formatCount = (n: number) => {
