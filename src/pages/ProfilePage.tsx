@@ -98,10 +98,31 @@ const ProfilePage = () => {
         ))}
       </div>
 
-      <div className="flex flex-col items-center justify-center py-16 px-8">
-        <p className="text-sm text-muted-foreground text-center">
-          {counts.videos === 0 ? t("noVideosYet") : `${counts.videos} ቪዲዮዎች`}
-        </p>
+      <div className="flex flex-col items-center justify-center py-10 px-4">
+        {loading ? (
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        ) : activeTab === "videos" && videos.length > 0 ? (
+          <div className="grid w-full grid-cols-3 gap-1">
+            {videos.map((v) => {
+              const thumb = v.thumbnail_url || getVideoThumbnail(v.video_url);
+              return (
+                <div key={v.id} className="relative aspect-[9/16] overflow-hidden bg-muted">
+                  {thumb ? (
+                    <img src={thumb} alt="" className="h-full w-full object-cover" loading="lazy" />
+                  ) : (
+                    <video src={v.video_url} className="h-full w-full object-cover" muted playsInline preload="metadata" />
+                  )}
+                  <div className="absolute bottom-1 left-1 flex items-center gap-1 rounded bg-background/60 px-1.5 py-0.5">
+                    <Play className="h-3 w-3 fill-foreground text-foreground" />
+                    <span className="text-[10px] font-semibold text-foreground">{formatCount(v.views_count)}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground text-center">{t("noVideosYet")}</p>
+        )}
       </div>
       <BottomNav />
     </div>
