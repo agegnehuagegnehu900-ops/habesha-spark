@@ -59,7 +59,7 @@ const CreatePage = () => {
 
       toast({ title: "✅ ተሳክቷል!", description: "ቪዲዮዎ ተጭኗል" });
       clearVideo();
-      navigate("/");
+      navigate("/profile");
     } catch (e: any) {
       toast({ title: "ስህተት", description: e.message, variant: "destructive" });
     } finally {
