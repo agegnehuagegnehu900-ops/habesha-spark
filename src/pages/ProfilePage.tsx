@@ -1,10 +1,19 @@
-import { Settings, Grid3X3, Bookmark, Heart } from "lucide-react";
+import { Settings, Grid3X3, Bookmark, Heart, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getVideoThumbnail } from "@/lib/cloudinary";
+
+interface MyVideo {
+  id: string;
+  video_url: string;
+  thumbnail_url: string | null;
+  views_count: number;
+  likes_count: number;
+}
 
 const ProfilePage = () => {
   const [activeTab, setActiveTab] = useState("videos");
@@ -12,21 +21,36 @@ const ProfilePage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<{ username: string | null; display_name: string | null; bio: string | null } | null>(null);
+  const [videos, setVideos] = useState<MyVideo[]>([]);
   const [counts, setCounts] = useState({ videos: 0, likes: 0 });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const [{ data: p }, { count: vc }, { data: vids }] = await Promise.all([
+      setLoading(true);
+      const [{ data: p }, { data: vids }] = await Promise.all([
         supabase.from("profiles").select("username, display_name, bio").eq("user_id", user.id).maybeSingle(),
-        supabase.from("videos").select("id", { count: "exact", head: true }).eq("user_id", user.id),
-        supabase.from("videos").select("likes_count").eq("user_id", user.id),
+        supabase
+          .from("videos")
+          .select("id, video_url, thumbnail_url, views_count, likes_count")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false }),
       ]);
       setProfile(p);
-      const totalLikes = (vids || []).reduce((s, v) => s + (v.likes_count || 0), 0);
-      setCounts({ videos: vc || 0, likes: totalLikes });
+      const list = (vids || []) as MyVideo[];
+      setVideos(list);
+      const totalLikes = list.reduce((s, v) => s + (v.likes_count || 0), 0);
+      setCounts({ videos: list.length, likes: totalLikes });
+      setLoading(false);
     })();
   }, [user]);
+
+  const formatCount = (n: number) => {
+    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M";
+    if (n >= 1_000) return (n / 1_000).toFixed(1) + "K";
+    return n.toString();
+  };
 
   const username = profile?.username || profile?.display_name || user?.email?.split("@")[0] || user?.phone || "user";
 
@@ -74,10 +98,31 @@ const ProfilePage = () => {
         ))}
       </div>
 
-      <div className="flex flex-col items-center justify-center py-16 px-8">
-        <p className="text-sm text-muted-foreground text-center">
-          {counts.videos === 0 ? t("noVideosYet") : `${counts.videos} ቪዲዮዎች`}
-        </p>
+      <div className="flex flex-col items-center justify-center py-10 px-4">
+        {loading ? (
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        ) : activeTab === "videos" && videos.length > 0 ? (
+          <div className="grid w-full grid-cols-3 gap-1">
+            {videos.map((v) => {
+              const thumb = v.thumbnail_url || getVideoThumbnail(v.video_url);
+              return (
+                <div key={v.id} className="relative aspect-[9/16] overflow-hidden bg-muted">
+                  {thumb ? (
+                    <img src={thumb} alt="" className="h-full w-full object-cover" loading="lazy" />
+                  ) : (
+                    <video src={v.video_url} className="h-full w-full object-cover" muted playsInline preload="metadata" />
+                  )}
+                  <div className="absolute bottom-1 left-1 flex items-center gap-1 rounded bg-background/60 px-1.5 py-0.5">
+                    <Play className="h-3 w-3 fill-foreground text-foreground" />
+                    <span className="text-[10px] font-semibold text-foreground">{formatCount(v.views_count)}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground text-center">{t("noVideosYet")}</p>
+        )}
       </div>
       <BottomNav />
     </div>
