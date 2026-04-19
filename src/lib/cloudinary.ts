@@ -1,7 +1,7 @@
 // Cloudinary unsigned upload helper
 const CLOUD_NAME = "dljojsuqo";
 const UPLOAD_PRESET = "agegnehu_videos";
-const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
+const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`;
 
 export interface CloudinaryUploadResult {
   secure_url: string;
