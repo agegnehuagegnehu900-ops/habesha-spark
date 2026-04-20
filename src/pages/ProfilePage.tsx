@@ -135,13 +135,12 @@ const ProfilePage = () => {
                 ) : (
                   <video src={v.video_url} className="h-full w-full object-cover" muted playsInline preload="metadata" />
                 )}
-                  <div className="absolute bottom-1 left-1 flex items-center gap-1 rounded bg-background/60 px-1.5 py-0.5">
-                    <Play className="h-3 w-3 fill-foreground text-foreground" />
-                    <span className="text-[10px] font-semibold text-foreground">{formatCount(v.views_count)}</span>
-                  </div>
+                <div className="absolute bottom-1 left-1 flex items-center gap-1 rounded bg-background/60 px-1.5 py-0.5">
+                  <Play className="h-3 w-3 fill-foreground text-foreground" />
+                  <span className="text-[10px] font-semibold text-foreground">{formatCount(v.views_count)}</span>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         ) : (
           <p className="text-sm text-muted-foreground text-center">{t("noVideosYet")}</p>
