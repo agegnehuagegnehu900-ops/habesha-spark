@@ -5,12 +5,13 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getVideoThumbnail } from "@/lib/cloudinary";
+import { db } from "@/lib/firebase";
+import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore";
 
 interface MyVideo {
   id: string;
   video_url: string;
-  thumbnail_url: string | null;
+  thumbnail_url?: string | null;
   views_count: number;
   likes_count: number;
 }
@@ -25,42 +26,49 @@ const ProfilePage = () => {
   const [counts, setCounts] = useState({ videos: 0, likes: 0 });
   const [loading, setLoading] = useState(true);
 
-  const loadData = async () => {
-    if (!user) return;
-    setLoading(true);
-    const [{ data: p }, { data: vids }] = await Promise.all([
-      supabase.from("profiles").select("username, display_name, bio").eq("user_id", user.id).maybeSingle(),
-      supabase
-        .from("videos")
-        .select("id, video_url, thumbnail_url, views_count, likes_count")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false }),
-    ]);
-    setProfile(p);
-    const list = (vids || []) as MyVideo[];
-    setVideos(list);
-    const totalLikes = list.reduce((s, v) => s + (v.likes_count || 0), 0);
-    setCounts({ videos: list.length, likes: totalLikes });
-    setLoading(false);
-  };
-
   useEffect(() => {
     if (!user) return;
-    loadData();
+    setLoading(true);
 
-    const channel = supabase
-      .channel(`profile-videos-${user.id}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "videos", filter: `user_id=eq.${user.id}` },
-        () => loadData()
-      )
-      .subscribe();
+    // Profile still from Lovable Cloud (auth source of truth)
+    supabase
+      .from("profiles")
+      .select("username, display_name, bio")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => setProfile(data));
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Videos from Firestore — realtime
+    const q = query(
+      collection(db, "videos"),
+      where("user_id", "==", user.id),
+      orderBy("created_at", "desc")
+    );
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        const list: MyVideo[] = snap.docs.map((d) => {
+          const data = d.data() as any;
+          return {
+            id: d.id,
+            video_url: data.video_url,
+            thumbnail_url: data.thumbnail_url ?? null,
+            views_count: data.views_count ?? 0,
+            likes_count: data.likes_count ?? 0,
+          };
+        });
+        setVideos(list);
+        const totalLikes = list.reduce((s, v) => s + (v.likes_count || 0), 0);
+        setCounts({ videos: list.length, likes: totalLikes });
+        setLoading(false);
+      },
+      (err) => {
+        console.error("Firestore videos error", err);
+        setLoading(false);
+      }
+    );
+
+    return () => unsub();
   }, [user]);
 
   const formatCount = (n: number) => {
@@ -120,22 +128,19 @@ const ProfilePage = () => {
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         ) : activeTab === "videos" && videos.length > 0 ? (
           <div className="grid w-full grid-cols-3 gap-1">
-            {videos.map((v) => {
-              const thumb = v.thumbnail_url || getVideoThumbnail(v.video_url);
-              return (
-                <div key={v.id} className="relative aspect-[9/16] overflow-hidden bg-muted">
-                  {thumb ? (
-                    <img src={thumb} alt="" className="h-full w-full object-cover" loading="lazy" />
-                  ) : (
-                    <video src={v.video_url} className="h-full w-full object-cover" muted playsInline preload="metadata" />
-                  )}
-                  <div className="absolute bottom-1 left-1 flex items-center gap-1 rounded bg-background/60 px-1.5 py-0.5">
-                    <Play className="h-3 w-3 fill-foreground text-foreground" />
-                    <span className="text-[10px] font-semibold text-foreground">{formatCount(v.views_count)}</span>
-                  </div>
+            {videos.map((v) => (
+              <div key={v.id} className="relative aspect-[9/16] overflow-hidden bg-muted">
+                {v.thumbnail_url ? (
+                  <img src={v.thumbnail_url} alt="" className="h-full w-full object-cover" loading="lazy" />
+                ) : (
+                  <video src={v.video_url} className="h-full w-full object-cover" muted playsInline preload="metadata" />
+                )}
+                <div className="absolute bottom-1 left-1 flex items-center gap-1 rounded bg-background/60 px-1.5 py-0.5">
+                  <Play className="h-3 w-3 fill-foreground text-foreground" />
+                  <span className="text-[10px] font-semibold text-foreground">{formatCount(v.views_count)}</span>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         ) : (
           <p className="text-sm text-muted-foreground text-center">{t("noVideosYet")}</p>
