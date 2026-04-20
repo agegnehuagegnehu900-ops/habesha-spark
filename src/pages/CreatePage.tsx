@@ -4,9 +4,8 @@ import { Camera, Video, Image, Upload, X, Loader2 } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { uploadToCloudinary, getVideoThumbnail } from "@/lib/cloudinary";
+import { uploadVideoToFirebase } from "@/lib/firebaseUpload";
 
 const CreatePage = () => {
   const { t } = useLanguage();
@@ -47,15 +46,12 @@ const CreatePage = () => {
     setUploading(true);
     setProgress(0);
     try {
-      const result = await uploadToCloudinary(selectedVideo, (p) => setProgress(p));
-
-      const { error: dbErr } = await supabase.from("videos").insert({
-        user_id: user.id,
-        video_url: result.secure_url,
-        thumbnail_url: getVideoThumbnail(result.secure_url),
-        description: description || null,
+      await uploadVideoToFirebase({
+        file: selectedVideo,
+        userId: user.id,
+        description,
+        onProgress: (p) => setProgress(p),
       });
-      if (dbErr) throw dbErr;
 
       toast({ title: "✅ ተሳክቷል!", description: "ቪዲዮዎ ተጭኗል" });
       clearVideo();
