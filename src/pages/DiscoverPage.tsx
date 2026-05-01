@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Search, Play } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { mockVideos } from "@/data/mockVideos";
+import { searchVideos, FSVideo } from "@/lib/firestoreHelpers";
 
 const trending = [
   "#ኢስክስታ", "#Agegnehu", "#ኢትዮጵያ", "#addisababa",
@@ -12,6 +12,26 @@ const trending = [
 const DiscoverPage = () => {
   const { t } = useLanguage();
   const [query, setQuery] = useState("");
+  const [results, setResults] = useState<FSVideo[]>([]);
+  const [searching, setSearching] = useState(false);
+
+  // Debounced realtime search
+  useEffect(() => {
+    if (!query.trim()) {
+      setResults([]);
+      return;
+    }
+    const handle = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const r = await searchVideos(query);
+        setResults(r);
+      } finally {
+        setSearching(false);
+      }
+    }, 250);
+    return () => clearTimeout(handle);
+  }, [query]);
 
   const categories = [
     { name: t("music"), color: "bg-primary" },
@@ -24,17 +44,9 @@ const DiscoverPage = () => {
     { name: t("film"), color: "bg-accent" },
   ];
 
-  const filteredVideos = query.length > 0
-    ? mockVideos.filter((v) =>
-        v.username.toLowerCase().includes(query.toLowerCase()) ||
-        v.description.toLowerCase().includes(query.toLowerCase()) ||
-        v.song.toLowerCase().includes(query.toLowerCase())
-      )
-    : [];
-
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <div className="px-4 pt-6">
+    <div className="min-h-[100dvh] bg-background pb-20">
+      <div className="mx-auto w-full max-w-3xl px-4 pt-6 sm:px-6 lg:px-8">
         <h1 className="text-xl font-bold text-foreground mb-4">{t("search")}</h1>
 
         <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2.5 mb-6">
@@ -46,22 +58,27 @@ const DiscoverPage = () => {
             onChange={(e) => setQuery(e.target.value)}
             className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
           />
+          {searching && <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />}
         </div>
 
         {query.length > 0 ? (
           <div className="space-y-3">
-            {filteredVideos.length === 0 ? (
-              <p className="text-center text-sm text-muted-foreground py-8">No results found</p>
+            {results.length === 0 && !searching ? (
+              <p className="text-center text-sm text-muted-foreground py-8">ምንም ውጤት የለም</p>
             ) : (
-              filteredVideos.map((video) => (
-                <div key={video.id} className="flex items-center gap-3 rounded-xl bg-card p-3 border border-border">
-                  <div className="h-14 w-14 rounded-lg flex items-center justify-center" style={{ backgroundColor: video.color }}>
-                    <span className="text-xs font-bold text-foreground">▶</span>
+              results.map((v) => (
+                <div key={v.id} className="flex items-center gap-3 rounded-xl bg-card p-3 border border-border">
+                  <div className="h-14 w-14 rounded-lg bg-muted overflow-hidden flex items-center justify-center">
+                    {v.thumbnail_url ? (
+                      <img src={v.thumbnail_url} alt="" className="h-full w-full object-cover" loading="lazy" />
+                    ) : (
+                      <Play className="h-5 w-5 text-foreground fill-foreground" />
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground">@{video.username}</p>
-                    <p className="text-xs text-muted-foreground line-clamp-1">{video.description}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">🎵 {video.song}</p>
+                    <p className="text-sm font-semibold text-foreground">@{v.username || "user"}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-1">{v.description}</p>
+                    {v.song_name && <p className="text-xs text-muted-foreground mt-0.5">🎵 {v.song_name}</p>}
                   </div>
                 </div>
               ))
@@ -81,7 +98,7 @@ const DiscoverPage = () => {
             </div>
 
             <h2 className="text-sm font-semibold text-foreground mb-3">{t("categories")}</h2>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {categories.map((cat) => (
                 <div key={cat.name} className={`${cat.color} rounded-xl p-4 text-center`}>
                   <span className="text-sm font-bold text-foreground">{cat.name}</span>
