@@ -10,8 +10,8 @@ const firebaseConfig = {
   projectId: "habesha-tiktok-17314",
   storageBucket: "habesha-tiktok-17314.firebasestorage.app",
   messagingSenderId: "179893918077",
-  appId: "1:179893918077:web:aed5bd4f0aaf01ae4a5414",
-  measurementId: "G-2TSJN3RJHR",
+  appId: "1:179893918077:web:4132e1ad07c3288d4a5414",
+  measurementId: "G-9BDYKV75ZF",
 };
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
