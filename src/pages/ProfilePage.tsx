@@ -91,8 +91,8 @@ const ProfilePage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <div className="flex items-center justify-between px-4 pt-6">
+    <div className="min-h-[100dvh] bg-background pb-20">
+      <div className="mx-auto w-full max-w-3xl flex items-center justify-between px-4 pt-6 sm:px-6 lg:px-8">
         <h1 className="text-lg font-bold text-foreground">@{username}</h1>
         <button onClick={() => navigate("/settings")}>
           <Settings className="h-5 w-5 text-foreground" />
