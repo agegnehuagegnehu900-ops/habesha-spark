@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { db } from "@/lib/firebase";
 import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore";
+import { getFollowCounts } from "@/lib/firestoreHelpers";
 
 interface MyVideo {
   id: string;
@@ -24,6 +25,7 @@ const ProfilePage = () => {
   const [profile, setProfile] = useState<{ username: string | null; display_name: string | null; bio: string | null } | null>(null);
   const [videos, setVideos] = useState<MyVideo[]>([]);
   const [counts, setCounts] = useState({ videos: 0, likes: 0 });
+  const [follow, setFollow] = useState({ followers: 0, following: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,6 +39,9 @@ const ProfilePage = () => {
       .eq("user_id", user.id)
       .maybeSingle()
       .then(({ data }) => setProfile(data));
+
+    // Follow counts from Firestore
+    getFollowCounts(user.id).then(setFollow).catch(() => {});
 
     // Videos from Firestore — realtime
     const q = query(
@@ -80,8 +85,8 @@ const ProfilePage = () => {
   const username = profile?.username || profile?.display_name || user?.email?.split("@")[0] || user?.phone || "user";
 
   const stats = [
-    { label: t("followers"), value: "0" },
-    { label: t("followingCount"), value: "0" },
+    { label: t("followers"), value: follow.followers.toString() },
+    { label: t("followingCount"), value: follow.following.toString() },
     { label: t("likes"), value: counts.likes.toString() },
   ];
 
