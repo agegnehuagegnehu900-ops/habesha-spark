@@ -85,10 +85,15 @@ const ProfilePage = () => {
   const username = profile?.username || profile?.display_name || user?.email?.split("@")[0] || user?.phone || "user";
 
   const stats = [
-    { label: t("followers"), value: follow.followers.toString() },
-    { label: t("followingCount"), value: follow.following.toString() },
-    { label: t("likes"), value: counts.likes.toString() },
+    { label: "ቪዲዮዎች", value: formatCount(counts.videos) },
+    { label: t("followers"), value: formatCount(follow.followers) },
+    { label: t("followingCount"), value: formatCount(follow.following) },
+    { label: t("likes"), value: formatCount(counts.likes) },
   ];
+
+  const joinDate = user?.created_at
+    ? new Date(user.created_at).toLocaleDateString("am-ET", { year: "numeric", month: "long" })
+    : null;
 
   return (
     <div className="min-h-[100dvh] bg-background pb-20">
@@ -118,6 +123,9 @@ const ProfilePage = () => {
           {t("editProfile")}
         </button>
         <p className="mt-3 text-center text-sm text-muted-foreground px-8">{profile?.bio || t("userBio")}</p>
+        {joinDate && (
+          <p className="mt-2 text-xs text-muted-foreground">የተቀላቀለበት፡ {joinDate}</p>
+        )}
       </div>
 
       <div className="mt-6 flex border-b border-border">
